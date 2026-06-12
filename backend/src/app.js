@@ -10,6 +10,7 @@ const errorHandler = require("./middlewares/error.middleware");
 const authRoutes = require("./features/auth/auth.routes");
 const clientRoutes = require("./features/client/client.routes");
 const projectRoutes = require("./features/project/project.routes");
+const taskRoutes = require("./features/task/task.routes");
 
 const env = require("./config/env");
 
@@ -50,6 +51,7 @@ app.use("/api/v1", apiLimiter);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/clients", clientRoutes);
 app.use("/api/v1/projects", projectRoutes);
+app.use("/api/v1/tasks", taskRoutes);
 
 // 404
 app.use((req, res) => {

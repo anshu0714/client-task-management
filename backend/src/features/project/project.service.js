@@ -103,8 +103,20 @@ async function updateProject(projectId, payload) {
       ERROR_CODES.INVALID_DATE_RANGE.code,
     );
   }
-
+  
   const clientId = payload.client || existingProject.client;
+
+  if (payload.client) {
+    const client = await Client.findById(payload.client);
+
+    if (!client) {
+      throw new AppError(
+        ERROR_CODES.CLIENT_NOT_FOUND.message,
+        404,
+        ERROR_CODES.CLIENT_NOT_FOUND.code,
+      );
+    }
+  }
 
   const projectName = payload.name ? payload.name.trim() : existingProject.name;
 

@@ -72,18 +72,35 @@ async function getClientById(clientId) {
 }
 
 async function updateClient(clientId, payload) {
-  const client = await Client.findByIdAndUpdate(clientId, payload, {
-    new: true,
-    runValidators: true,
-  });
+  const existingClient = await Client.findById(clientId);
 
-  if (!client) {
+  if (!existingClient) {
     throw new AppError(
       ERROR_CODES.CLIENT_NOT_FOUND.message,
       404,
       ERROR_CODES.CLIENT_NOT_FOUND.code,
     );
   }
+
+  if (payload.email) {
+    const duplicateClient = await Client.findOne({
+      email: payload.email,
+      _id: { $ne: clientId },
+    });
+
+    if (duplicateClient) {
+      throw new AppError(
+        ERROR_CODES.CLIENT_ALREADY_EXISTS.message,
+        409,
+        ERROR_CODES.CLIENT_ALREADY_EXISTS.code,
+      );
+    }
+  }
+
+  const client = await Client.findByIdAndUpdate(clientId, payload, {
+    new: true,
+    runValidators: true,
+  });
 
   return client;
 }

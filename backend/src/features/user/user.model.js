@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       enum: Object.values(ROLES),
       default: ROLES.EMPLOYEE,
       required: true,
+      immutable: true,
     },
   },
   { timestamps: true },

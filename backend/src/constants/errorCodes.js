@@ -68,6 +68,18 @@ const ERROR_CODES = {
     code: "TASK_NOT_FOUND",
     message: "Task not found",
   },
+  ASSIGNED_USER_NOT_FOUND: {
+    code: "ASSIGNED_USER_NOT_FOUND",
+    message: "Assigned user not found",
+  },
+  TASK_ALREADY_EXISTS: {
+    code: "TASK_ALREADY_EXISTS",
+    message: "Task already exists in this project",
+  },
+  INVALID_TASK_UPDATE: {
+    code: "INVALID_TASK_UPDATE",
+    message: "Employees can only update task status",
+  },
   COMMENT_NOT_FOUND: {
     code: "COMMENT_NOT_FOUND",
     message: "Comment not found",
