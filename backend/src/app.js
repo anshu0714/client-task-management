@@ -4,9 +4,11 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 
 const requestLogger = require("./middlewares/logger.middleware");
-
 const { apiLimiter } = require("./middlewares/rateLimit.middleware");
 const errorHandler = require("./middlewares/error.middleware");
+
+const authRoutes = require("./features/auth/auth.routes");
+
 const env = require("./config/env");
 
 const app = express();
@@ -43,6 +45,7 @@ app.get("/api/v1/health", (req, res) => {
 app.use("/api/v1", apiLimiter);
 
 // App routes
+app.use("/api/v1/auth", authRoutes);
 
 // 404
 app.use((req, res) => {

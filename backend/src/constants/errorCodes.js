@@ -43,18 +43,10 @@ const ERROR_CODES = {
     message: "User already exists",
   },
 
-  // AUTHORIZATION / RBAC ERRORS
-  USER_ROLE_NOT_ASSIGNED: {
-    code: "USER_ROLE_NOT_ASSIGNED",
-    message: "User role not assigned",
-  },
+  // AUTHORIZATION ERRORS
   INSUFFICIENT_ROLE: {
     code: "INSUFFICIENT_ROLE",
     message: "You do not have the required role to perform this action",
-  },
-  ROLE_NOT_FOUND: {
-    code: "ROLE_NOT_FOUND",
-    message: "Role not found",
   },
 
   // VALIDATION
