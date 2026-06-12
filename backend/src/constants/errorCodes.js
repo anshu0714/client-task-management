@@ -43,6 +43,28 @@ const ERROR_CODES = {
     message: "User already exists",
   },
 
+  // FEATURES ERRORS
+  CLIENT_NOT_FOUND: {
+    code: "CLIENT_NOT_FOUND",
+    message: "Client not found",
+  },
+  CLIENT_ALREADY_EXISTS: {
+    code: "CLIENT_ALREADY_EXISTS",
+    message: "Client already exists",
+  },
+  PROJECT_NOT_FOUND: {
+    code: "PROJECT_NOT_FOUND",
+    message: "Project not found",
+  },
+  TASK_NOT_FOUND: {
+    code: "TASK_NOT_FOUND",
+    message: "Task not found",
+  },
+  COMMENT_NOT_FOUND: {
+    code: "COMMENT_NOT_FOUND",
+    message: "Comment not found",
+  },
+
   // AUTHORIZATION ERRORS
   INSUFFICIENT_ROLE: {
     code: "INSUFFICIENT_ROLE",

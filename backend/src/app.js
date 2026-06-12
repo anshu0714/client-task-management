@@ -8,6 +8,7 @@ const { apiLimiter } = require("./middlewares/rateLimit.middleware");
 const errorHandler = require("./middlewares/error.middleware");
 
 const authRoutes = require("./features/auth/auth.routes");
+const clientRoutes = require("./features/client/client.routes");
 
 const env = require("./config/env");
 
@@ -46,6 +47,7 @@ app.use("/api/v1", apiLimiter);
 
 // App routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/clients", clientRoutes);
 
 // 404
 app.use((req, res) => {
