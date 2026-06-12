@@ -1,0 +1,79 @@
+const ERROR_CODES = {
+  // AUTH ERRORS
+  ACCESS_TOKEN_EXPIRED: {
+    code: "ACCESS_TOKEN_EXPIRED",
+    message: "Access token expired",
+  },
+  INVALID_TOKEN: {
+    code: "INVALID_TOKEN",
+    message: "Invalid authentication token",
+  },
+  NO_TOKEN: {
+    code: "NO_TOKEN",
+    message: "No authentication token provided",
+  },
+  UNAUTHORIZED: {
+    code: "UNAUTHORIZED",
+    message: "Unauthorized access",
+  },
+
+  // REFRESH TOKEN ERRORS
+  REFRESH_TOKEN_REQUIRED: {
+    code: "REFRESH_TOKEN_REQUIRED",
+    message: "Refresh token is required",
+  },
+  INVALID_REFRESH_TOKEN: {
+    code: "INVALID_REFRESH_TOKEN",
+    message: "Invalid or expired refresh token",
+  },
+
+  // AUTH FLOW
+  INVALID_CREDENTIALS: {
+    code: "INVALID_CREDENTIALS",
+    message: "Invalid email or password",
+  },
+
+  // USER ERRORS
+  USER_NOT_FOUND: {
+    code: "USER_NOT_FOUND",
+    message: "User not found",
+  },
+  USER_ALREADY_EXISTS: {
+    code: "USER_ALREADY_EXISTS",
+    message: "User already exists",
+  },
+
+  // AUTHORIZATION / RBAC ERRORS
+  USER_ROLE_NOT_ASSIGNED: {
+    code: "USER_ROLE_NOT_ASSIGNED",
+    message: "User role not assigned",
+  },
+  INSUFFICIENT_ROLE: {
+    code: "INSUFFICIENT_ROLE",
+    message: "You do not have the required role to perform this action",
+  },
+  ROLE_NOT_FOUND: {
+    code: "ROLE_NOT_FOUND",
+    message: "Role not found",
+  },
+
+  // VALIDATION
+  VALIDATION_ERROR: {
+    code: "VALIDATION_ERROR",
+    message: "Validation failed",
+  },
+
+  // RATE LIMIT
+  TOO_MANY_REQUESTS: {
+    code: "TOO_MANY_REQUESTS",
+    message: "Too many requests, please try again later",
+  },
+
+  // GENERAL
+  INTERNAL_ERROR: {
+    code: "INTERNAL_ERROR",
+    message: "Something went wrong",
+  },
+};
+
+module.exports = ERROR_CODES;
