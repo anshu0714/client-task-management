@@ -84,6 +84,10 @@ const ERROR_CODES = {
     code: "COMMENT_NOT_FOUND",
     message: "Comment not found",
   },
+  TASK_ACCESS_DENIED: {
+    code: "TASK_ACCESS_DENIED",
+    message: "You are not allowed to access this task",
+  },
 
   // AUTHORIZATION ERRORS
   INSUFFICIENT_ROLE: {
