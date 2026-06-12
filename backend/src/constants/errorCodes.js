@@ -88,6 +88,10 @@ const ERROR_CODES = {
     code: "TASK_ACCESS_DENIED",
     message: "You are not allowed to access this task",
   },
+  DASHBOARD_ERROR: {
+    code: "DASHBOARD_ERROR",
+    message: "Failed to fetch dashboard statistics",
+  },
 
   // AUTHORIZATION ERRORS
   INSUFFICIENT_ROLE: {
