@@ -12,6 +12,7 @@ const clientRoutes = require("./features/client/client.routes");
 const projectRoutes = require("./features/project/project.routes");
 const taskRoutes = require("./features/task/task.routes");
 const dashboardRoutes = require("./features/dashboard/dashboard.routes");
+const userRoutes = require("./features/user/user.routes")
 
 const env = require("./config/env");
 
@@ -54,6 +55,7 @@ app.use("/api/v1/clients", clientRoutes);
 app.use("/api/v1/projects", projectRoutes);
 app.use("/api/v1/tasks", taskRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/users", userRoutes);
 
 // 404
 app.use((req, res) => {
