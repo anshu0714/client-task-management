@@ -56,6 +56,14 @@ const ERROR_CODES = {
     code: "PROJECT_NOT_FOUND",
     message: "Project not found",
   },
+  PROJECT_ALREADY_EXISTS: {
+    code: "PROJECT_ALREADY_EXISTS",
+    message: "Project already exists for this client",
+  },
+  INVALID_DATE_RANGE: {
+    code: "INVALID_DATE_RANGE",
+    message: "Due date must be after start date",
+  },
   TASK_NOT_FOUND: {
     code: "TASK_NOT_FOUND",
     message: "Task not found",
