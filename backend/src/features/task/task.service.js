@@ -1,15 +1,14 @@
 const Task = require("./task.model");
 const Project = require("../project/project.model");
 const User = require("../user/user.model");
-
 const AppError = require("../../utils/appError");
 const ERROR_CODES = require("../../constants/errorCodes");
+const ROLES = require("../../constants/roles");
 
 async function createTask(payload) {
   payload.title = payload.title.trim();
 
   const project = await Project.findById(payload.project);
-
   if (!project) {
     throw new AppError(
       ERROR_CODES.PROJECT_NOT_FOUND.message,
@@ -19,7 +18,6 @@ async function createTask(payload) {
   }
 
   const assignedUser = await User.findById(payload.assignedUser);
-
   if (!assignedUser) {
     throw new AppError(
       ERROR_CODES.ASSIGNED_USER_NOT_FOUND.message,
@@ -53,49 +51,70 @@ async function getTasks(filters, user) {
     assignedUser,
     dueDate,
     search,
+    client,
+    project,
   } = filters;
 
   const query = {};
 
-  if (user.role === "EMPLOYEE") {
+  if (user.role === ROLES.EMPLOYEE) {
     query.assignedUser = user.id;
   }
 
   if (status) query.status = status;
   if (priority) query.priority = priority;
+  if (project) query.project = project;
 
-  if (assignedUser && user.role === "ADMIN") {
+  if (assignedUser && user.role === ROLES.ADMIN) {
     query.assignedUser = assignedUser;
   }
 
   if (dueDate) {
-    query.dueDate = {
-      $lte: new Date(dueDate),
-    };
+    const selectedDate = new Date(dueDate);
+    const nextDate = new Date(dueDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    query.dueDate = { $gte: selectedDate, $lt: nextDate };
+  }
+
+  let projectIdsFromSearch = [];
+
+  if (client) {
+    const projects = await Project.find({ client }).select("_id");
+    projectIdsFromSearch = projects.map((p) => p._id);
+    query.project = { $in: projectIdsFromSearch };
   }
 
   if (search) {
-    query.title = {
-      $regex: search,
-      $options: "i",
-    };
+    const matchingProjects = await Project.find()
+      .populate("client", "name companyName")
+      .lean();
+
+    const matchedProjectIds = matchingProjects
+      .filter((p) => {
+        const text =
+          `${p.name || ""} ${p.client?.name || ""} ${p.client?.companyName || ""}`.toLowerCase();
+        return text.includes(search.toLowerCase());
+      })
+      .map((p) => p._id);
+
+    query.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { project: { $in: matchedProjectIds } },
+    ];
   }
 
-  const skip = (page - 1) * limit;
+  const skip = (Number(page) - 1) * Number(limit);
 
   const [tasks, total] = await Promise.all([
     Task.find(query)
       .populate({
         path: "project",
-        populate: {
-          path: "client",
-        },
+        populate: { path: "client" },
       })
       .populate("assignedUser", "-password")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit)),
-
     Task.countDocuments(query),
   ]);
 
@@ -105,7 +124,7 @@ async function getTasks(filters, user) {
       page: Number(page),
       limit: Number(limit),
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / Number(limit)),
     },
   };
 }

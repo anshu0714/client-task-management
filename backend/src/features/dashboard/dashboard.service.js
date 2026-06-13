@@ -4,6 +4,7 @@ const Task = require("../task/task.model");
 
 async function getDashboardStats(user) {
   const isAdmin = user.role === "ADMIN";
+  const now = new Date();
 
   if (isAdmin) {
     const [
@@ -17,17 +18,10 @@ async function getDashboardStats(user) {
       Client.countDocuments(),
       Project.countDocuments(),
       Task.countDocuments(),
-
+      Task.countDocuments({ status: "PENDING" }),
+      Task.countDocuments({ status: "COMPLETED" }),
       Task.countDocuments({
-        status: "PENDING",
-      }),
-
-      Task.countDocuments({
-        status: "COMPLETED",
-      }),
-
-      Task.countDocuments({
-        dueDate: { $lt: new Date() },
+        dueDate: { $lt: now },
         status: { $ne: "COMPLETED" },
       }),
     ]);
@@ -60,7 +54,7 @@ async function getDashboardStats(user) {
 
       Task.countDocuments({
         assignedUser: user.id,
-        dueDate: { $lt: new Date() },
+        dueDate: { $lt: now },
         status: { $ne: "COMPLETED" },
       }),
     ]);
