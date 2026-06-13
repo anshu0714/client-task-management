@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Loader from "../../../shared/components/Loader";
-import EmptyState from "../../../shared/components/EmptyState";
-import Button from "../../../shared/components/Button";
+import ProjectPageHeader from "../components/ProjectPageHeader";
+import ProjectStats from "../components/ProjectStats";
+import ProjectFilters from "../components/ProjectFilters";
+import ProjectTable from "../components/ProjectTable";
+import ProjectModal from "../components/ProjectModal";
+import ProjectDetailsModal from "../components/ProjectDetailsModal";
+import DeleteConfirmModal from "../../../shared/components/DeleteConfirmModal";
 
 import { getClientsApi } from "../../clients/services/client.api";
-
 import {
   getProjectsApi,
   createProjectApi,
@@ -18,118 +22,157 @@ import { showSuccess, showError } from "../../../shared/utils/toast";
 export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [viewingProject, setViewingProject] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [clientFilter, setClientFilter] = useState("ALL");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState(null);
 
-  const [form, setForm] = useState({
-    client: "",
-    name: "",
-    description: "",
-    startDate: "",
-    dueDate: "",
-    status: "NOT_STARTED",
-  });
-
-  const resetForm = () => {
-    setForm({
-      client: "",
-      name: "",
-      description: "",
-      startDate: "",
-      dueDate: "",
-      status: "NOT_STARTED",
-    });
-
-    setEditingProject(null);
-  };
+  const getEntityId = (item) => item?.id || item?._id || "";
 
   const fetchData = async () => {
     try {
       const [projectsRes, clientsRes] = await Promise.all([
-        getProjectsApi(),
-        getClientsApi(),
+        getProjectsApi({ page: 1, limit: 100 }),
+        getClientsApi({ page: 1, limit: 100 }),
       ]);
 
-      setProjects(projectsRes.data.projects || []);
-      setClients(clientsRes.data.clients || []);
-    } catch {
-      showError("Failed to load data");
-    } finally {
-      setLoading(false);
+      setProjects(projectsRes?.data?.projects || []);
+      setClients(clientsRes?.data?.clients || []);
+    } catch (error) {
+      showError(error?.response?.data?.message || "Failed to load data");
     }
   };
 
   useEffect(() => {
-    const loadData = async () => {
-      await fetchData();
-    };
+    let ignore = false;
 
-    loadData();
+    async function loadData() {
+      try {
+        const [projectsRes, clientsRes] = await Promise.all([
+          getProjectsApi({ page: 1, limit: 100 }),
+          getClientsApi({ page: 1, limit: 100 }),
+        ]);
+
+        if (!ignore) {
+          setProjects(projectsRes?.data?.projects || []);
+          setClients(clientsRes?.data?.clients || []);
+        }
+      } catch (error) {
+        if (!ignore) {
+          showError(error?.response?.data?.message || "Failed to load data");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadData();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+  const filteredProjects = useMemo(() => {
+    let filtered = [...projects];
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter((project) =>
+        `${project?.name || ""} ${project?.client?.name || ""}`
+          .toLowerCase()
+          .includes(q),
+      );
+    }
+
+    if (statusFilter !== "ALL") {
+      filtered = filtered.filter((project) => project?.status === statusFilter);
+    }
+
+    if (clientFilter !== "ALL") {
+      filtered = filtered.filter(
+        (project) => getEntityId(project?.client) === clientFilter,
+      );
+    }
+
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "az":
+          return (a?.name || "").localeCompare(b?.name || "");
+        case "za":
+          return (b?.name || "").localeCompare(a?.name || "");
+        case "oldest":
+          return (
+            new Date(a?.createdAt || 0).getTime() -
+            new Date(b?.createdAt || 0).getTime()
+          );
+        default:
+          return (
+            new Date(b?.createdAt || 0).getTime() -
+            new Date(a?.createdAt || 0).getTime()
+          );
+      }
+    });
+  }, [projects, searchTerm, sortBy, statusFilter, clientFilter]);
+
+  const handleOpenCreate = () => {
+    setEditingProject(null);
+    setIsModalOpen(true);
+  };
+
+  const handleView = (project) => {
+    setViewingProject(project);
+    setViewModalOpen(true);
   };
 
   const handleEdit = (project) => {
     setEditingProject(project);
-
-    setForm({
-      client: project.client?._id,
-      name: project.name,
-      description: project.description || "",
-      startDate: project.startDate?.slice(0, 10),
-      dueDate: project.dueDate?.slice(0, 10),
-      status: project.status,
-    });
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setIsModalOpen(true);
   };
 
-  const validateDates = () => {
-    const start = new Date(form.startDate);
-    const due = new Date(form.dueDate);
-
-    if (due <= start) {
-      showError("Due date must be after start date");
-
-      return false;
-    }
-
-    return true;
+  const handleDeleteClick = (project) => {
+    setProjectToDelete(project);
+    setDeleteModalOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
 
-    if (!validateDates()) {
-      return;
+    try {
+      await deleteProjectApi(getEntityId(projectToDelete));
+      showSuccess("Project deleted successfully");
+      setDeleteModalOpen(false);
+      setProjectToDelete(null);
+      await fetchData();
+    } catch (error) {
+      showError(error?.response?.data?.message || "Delete failed");
     }
+  };
 
+  const handleSubmit = async (formData) => {
     try {
       setSubmitting(true);
 
       if (editingProject) {
-        await updateProjectApi(editingProject._id, form);
-
-        showSuccess("Project updated");
+        await updateProjectApi(getEntityId(editingProject), formData);
+        showSuccess("Project updated successfully");
       } else {
-        await createProjectApi(form);
-
-        showSuccess("Project created");
+        await createProjectApi(formData);
+        showSuccess("Project created successfully");
       }
 
-      resetForm();
-
+      setEditingProject(null);
+      setIsModalOpen(false);
       await fetchData();
     } catch (error) {
       showError(error?.response?.data?.message || "Operation failed");
@@ -138,177 +181,75 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm("Delete project?");
-
-    if (!confirmed) return;
-
-    try {
-      await deleteProjectApi(id);
-
-      showSuccess("Project deleted");
-
-      await fetchData();
-    } catch (error) {
-      showError(error?.response?.data?.message || "Delete failed");
-    }
-  };
-
   if (loading) {
     return <Loader />;
   }
 
   return (
-    <div className="space-y-8">
-      <div className="bg-white rounded-xl shadow p-6">
-        <h1 className="text-2xl font-bold mb-4">
-          {editingProject ? "Edit Project" : "Add Project"}
-        </h1>
+    <div className="space-y-6 lg:space-y-8">
+      <ProjectPageHeader
+        totalProjects={projects.length}
+        onAddProject={handleOpenCreate}
+      />
 
-        <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
-          <select
-            name="client"
-            value={form.client}
-            onChange={handleChange}
-            className="border p-3 rounded"
-          >
-            <option value="">Select Client</option>
+      <ProjectStats projects={projects} />
 
-            {clients.map((client) => (
-              <option key={client._id} value={client._id}>
-                {client.name}
-              </option>
-            ))}
-          </select>
+      <ProjectFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        clientFilter={clientFilter}
+        setClientFilter={setClientFilter}
+        clients={clients}
+      />
 
-          <input
-            name="name"
-            placeholder="Project Name"
-            value={form.name}
-            onChange={handleChange}
-            className="border p-3 rounded"
-          />
+      <ProjectTable
+        projects={filteredProjects}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
 
-          <div>
-            <label className="block mb-2 font-medium">Start Date</label>
+      <ProjectModal
+        open={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingProject(null);
+        }}
+        onSubmit={handleSubmit}
+        initialData={editingProject}
+        loading={submitting}
+        clients={clients}
+      />
 
-            <input
-              type="date"
-              name="startDate"
-              value={form.startDate}
-              min={new Date().toISOString().split("T")[0]}
-              onChange={handleChange}
-              className="w-full border p-3 rounded"
-            />
-          </div>
+      <ProjectDetailsModal
+        open={viewModalOpen}
+        onClose={() => {
+          setViewModalOpen(false);
+          setViewingProject(null);
+        }}
+        project={viewingProject}
+      />
 
-          <div>
-            <label className="block mb-2 font-medium">Due Date</label>
-
-            <input
-              type="date"
-              name="dueDate"
-              value={form.dueDate}
-              min={form.startDate}
-              onChange={handleChange}
-              className="w-full border p-3 rounded"
-            />
-          </div>
-
-          <textarea
-            name="description"
-            placeholder="Description"
-            value={form.description}
-            onChange={handleChange}
-            className="border p-3 rounded md:col-span-2"
-          />
-
-          <div>
-            <label className="block mb-2 font-medium">Status</label>
-
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className="w-full border p-3 rounded"
-            >
-              <option value="NOT_STARTED">Not Started</option>
-
-              <option value="IN_PROGRESS">In Progress</option>
-
-              <option value="COMPLETED">Completed</option>
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <Button type="submit" loading={submitting}>
-              {editingProject ? "Update Project" : "Create Project"}
-            </Button>
-          </div>
-        </form>
-      </div>
-
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold">Projects</h2>
-        </div>
-
-        {!projects.length ? (
-          <div className="p-6">
-            <EmptyState title="No projects found" />
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-slate-50">
-                <th className="p-4 text-left">Project</th>
-
-                <th className="p-4 text-left">Client</th>
-
-                <th className="p-4 text-left">Status</th>
-
-                <th className="p-4 text-left">Due Date</th>
-
-                <th className="p-4 text-left">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {projects.map((project) => (
-                <tr key={project._id} className="border-b">
-                  <td className="p-4">{project.name}</td>
-
-                  <td className="p-4">{project.client?.name}</td>
-
-                  <td className="p-4">{project.status}</td>
-
-                  <td className="p-4">
-                    {new Date(project.dueDate).toLocaleDateString()}
-                  </td>
-
-                  <td className="p-4">
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => handleEdit(project)}
-                        className="text-blue-600"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(project._id)}
-                        className="text-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <DeleteConfirmModal
+        open={deleteModalOpen}
+        title="Delete Project"
+        description="This action cannot be undone. You are about to permanently remove this project."
+        itemName={
+          projectToDelete
+            ? `${projectToDelete?.name || "Project"} (${projectToDelete?.client?.name || "No Client"})`
+            : ""
+        }
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setProjectToDelete(null);
+        }}
+        onConfirm={confirmDeleteProject}
+        loading={submitting}
+      />
     </div>
   );
 }

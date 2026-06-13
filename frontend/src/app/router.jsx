@@ -10,6 +10,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import ClientsPage from "../features/clients/pages/ClientPage";
 import ProjectsPage from "../features/projects/pages/ProjectsPage";
+import TasksPage from "../features/tasks/pages/TasksPage";
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ export const router = createBrowserRouter([
         path: "projects",
         element: <ProjectsPage />,
       },
+      {
+  path: "tasks",
+  element: <TasksPage />,
+},
     ],
   },
 ]);

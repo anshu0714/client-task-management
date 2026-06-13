@@ -1,6 +1,6 @@
 import api from "../../../services/api.client";
 
-export const getClientsApi = async (params) => {
+export const getClientsApi = async (params = {}) => {
   const res = await api.get("/clients", {
     params,
   });
@@ -10,7 +10,6 @@ export const getClientsApi = async (params) => {
 
 export const createClientApi = async (payload) => {
   const res = await api.post("/clients", payload);
-
   return res.data;
 };
 
@@ -21,12 +20,10 @@ export const getClientByIdApi = async (id) => {
 
 export const updateClientApi = async (id, payload) => {
   const res = await api.patch(`/clients/${id}`, payload);
-
   return res.data;
 };
 
 export const deleteClientApi = async (id) => {
   const res = await api.delete(`/clients/${id}`);
-
   return res.data;
 };
